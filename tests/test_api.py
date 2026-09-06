@@ -1,7 +1,13 @@
 import pytest
 import requests
 import json
+import sys
+import os
 from unittest.mock import patch, MagicMock
+
+# Добавляем путь к корневой папке проекта
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from api import fetch_rates, API_URL
 
 def test_fetch_rates_success():
