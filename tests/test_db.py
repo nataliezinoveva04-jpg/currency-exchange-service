@@ -1,9 +1,14 @@
 import pytest
 import sqlite3
 import os
+import sys
 import tempfile
 from datetime import datetime
 from unittest.mock import patch, MagicMock
+
+# Добавляем путь к корневой папке проекта
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from db import init_db, save_rate, get_saved_rate, get_db_connection, DB_NAME
 
 @pytest.fixture
@@ -11,7 +16,6 @@ def temp_db():
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
     temp_file.close()
     
-    original_db_name = DB_NAME
     with patch('db.DB_NAME', temp_file.name):
         init_db()
         yield temp_file.name
