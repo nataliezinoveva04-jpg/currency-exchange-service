@@ -3,7 +3,6 @@ import sys
 import os
 from unittest.mock import patch, MagicMock
 
-# Добавляем путь к корневой папке проекта
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import calculate_loan, convert, update_db
