@@ -5,7 +5,6 @@ import sys
 import os
 from unittest.mock import patch, MagicMock
 
-# Добавляем путь к корневой папке проекта
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from api import fetch_rates, API_URL
@@ -74,5 +73,6 @@ def test_fetch_rates_malformed_json():
 def test_fetch_rates_ssl_error():
     with patch('requests.get') as mock_get:
         mock_get.side_effect = requests.exceptions.SSLError("SSL certificate error")
-        with pytest.raises(Exception, match="SSL error"):
+        with pytest.raises(Exception) as exc_info:
             fetch_rates()
+        assert "SSL error" in str(exc_info.value)
