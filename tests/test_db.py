@@ -6,7 +6,6 @@ import tempfile
 from datetime import datetime
 from unittest.mock import patch, MagicMock
 
-# Добавляем путь к корневой папке проекта
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from db import init_db, save_rate, get_saved_rate, get_db_connection, DB_NAME
@@ -78,12 +77,12 @@ def test_save_rate_edge_cases(temp_db):
 def test_save_rate_database_connection_error(temp_db):
     with patch('db.get_db_connection') as mock_conn:
         mock_conn.side_effect = sqlite3.OperationalError("Connection error")
-        with pytest.raises(Exception, match="Database error"):
+        with pytest.raises(Exception, match="Connection error"):
             save_rate('USD', 75.5)
 
 def test_save_rate_commit_error(temp_db):
-    with patch('sqlite3.Connection.commit') as mock_commit:
-        mock_commit.side_effect = sqlite3.OperationalError("Commit error")
+    with patch('db.get_db_connection') as mock_conn:
+        mock_conn.return_value.__enter__.return_value.commit.side_effect = sqlite3.OperationalError("Commit error")
         with pytest.raises(Exception, match="Database error"):
             save_rate('USD', 75.5)
 
@@ -100,7 +99,8 @@ def test_save_rate_parameter_types(temp_db):
 
 def test_save_rate_sql_injection_protection(temp_db):
     malicious_currency = "USD'; DROP TABLE rates; --"
-    save_rate(malicious_currency, 75.5)
+    with pytest.raises(ValueError, match="Currency must be a 3-letter string"):
+        save_rate(malicious_currency, 75.5)
     
     with get_db_connection() as conn:
         cursor = conn.cursor()
