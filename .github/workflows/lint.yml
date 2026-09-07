@@ -2,43 +2,52 @@ name: Lint Check
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+# Добавляем явное разрешение на запись для GITHUB_TOKEN
+permissions:
+  contents: write
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install black==23.3.0
-    
-    - name: Format code with Black
-      run: |
-        black .
-    
-    - name: Check if any files were changed
-      id: git-check
-      run: |
-        git diff --exit-code || echo "changed=true" >> $GITHUB_OUTPUT
-    
-    - name: Commit changes if needed
-      if: steps.git-check.outputs.changed == 'true'
-      run: |
-        git config user.name "nataliezinoveva04-jpg"
-        git config user.email "nataliezinoveva04-jpg@users.noreply.github.com"
-        git add .
-        git commit -m "Auto-format code with Black"
-        git push
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+        # Для pull_request явно указываем, откуда брать код
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black==23.3.0
+
+      # ВАЖНО: на pull_request Black только проверяет и падает с ошибкой
+      - name: Check formatting with Black (for PR)
+        if: github.event_name == 'pull_request'
+        run: black --check .
+
+      # Только для push Black может сам исправить код
+      - name: Format code with Black and Push (for push)
+        if: github.event_name == 'push'
+        run: |
+          black .
+          # Проверяем, были ли изменения
+          if git diff --quiet; then
+            echo "No formatting changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Auto-format code with Black"
+          # Отправляем изменения в ту же ветку, откуда пришёл push
+          git push origin "HEAD:${{ github.ref_name }}"
