@@ -4,24 +4,22 @@ from typing import Optional, Dict, Any
 
 API_URL = "https://www.cbr-xml-daily.ru/daily_json.js"
 
-
 def fetch_rates() -> Optional[Dict[str, Any]]:
     """Получение курсов валют из внешнего API"""
     try:
         response = requests.get(API_URL, timeout=10)
         response.raise_for_status()
         data = response.json()
-
+        
         if not data or 'Valute' not in data:
             return None
-
-        # Проверка на пустой Valute
+        
         if not data.get('Valute'):
             return None
-
+        
         if data.get('success') is False:
             return None
-
+            
         return data
     except requests.exceptions.HTTPError as e:
         raise Exception(f"HTTP error occurred: {e}")
