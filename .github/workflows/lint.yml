@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-# Добавляем явное разрешение на запись для GITHUB_TOKEN
 permissions:
   contents: write
 
@@ -16,7 +15,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        # Для pull_request явно указываем, откуда брать код
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
@@ -30,17 +28,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install black==23.3.0
 
-      # ВАЖНО: на pull_request Black только проверяет и падает с ошибкой
       - name: Check formatting with Black (for PR)
         if: github.event_name == 'pull_request'
         run: black --check .
 
-      # Только для push Black может сам исправить код
       - name: Format code with Black and Push (for push)
         if: github.event_name == 'push'
         run: |
           black .
-          # Проверяем, были ли изменения
           if git diff --quiet; then
             echo "No formatting changes"
             exit 0
@@ -49,5 +44,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .
           git commit -m "Auto-format code with Black"
-          # Отправляем изменения в ту же ветку, откуда пришёл push
           git push origin "HEAD:${{ github.ref_name }}"
