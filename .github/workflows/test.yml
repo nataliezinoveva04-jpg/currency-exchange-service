@@ -28,7 +28,6 @@ jobs:
           pip install -r requirements.txt
           pip install pytest-cov
 
-      # Убедимся, что файл .env существует, чтобы избежать ошибок импорта
       - name: Create .env file
         run: |
           echo "DB_NAME=currency.db" > .env
